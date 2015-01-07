@@ -1,0 +1,24 @@
+#/bin/bash
+
+# Create the AWS iptables chain if it doesn't exist
+iptables -n --list AWS >/dev/null 2>&1 \
+    || (iptables -N AWS && iptables -I INPUT 1 -j AWS)
+
+# Flush the existing AWS iptables chain
+iptables -F AWS
+
+# Get list of IP ranges
+#
+# First we use curl to grab the official list of ranges from Amazon. The -s
+# prevents extraneous output from curl, and the -L makes it follow redirects.
+#
+# The ranges are passed to jq, a JSON parser. The -r makes jq output raw data
+# without quotes. We only need the list of prefixes, so we discard everything
+# else.
+RANGES=$(curl -s -L https://ip-ranges.amazonaws.com/ip-ranges.json \
+    | jq -r '.prefixes[].ip_prefix')
+
+# Loop through the ranges, adding each to iptables
+while read -r line; do
+    iptables -A AWS -s "$line" -j REJECT
+done <<< "$RANGES"
