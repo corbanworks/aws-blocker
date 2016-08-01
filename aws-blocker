@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # Create the AWS iptables chain if it doesn't exist
 iptables -n --list AWS >/dev/null 2>&1 \
