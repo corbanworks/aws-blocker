@@ -1,6 +1,27 @@
 #!/bin/bash -e
 
 POSITION=1
+FILTERS=""
+
+# Get the line where the jump will be inserted at.
+# Useful if you want e.g related / established rules for outgoing traffic.
+if [[ -n $1 ]]; then
+    POSITION=$1
+fi
+
+# Process region filter statements
+for arg in ${@:2}; do
+    if [[ -n $FILTERS ]]; then
+        FILTERS=$FILTERS", "
+    fi
+
+    FILTERS=$FILTERS"select(.region | contains(\"$arg\"))"
+done
+
+if [[ -n $FILTERS ]]; then
+    FILTERS=" | "$FILTERS" | "
+fi
+
 
 # Create the AWS iptables chain if it doesn't exist
 iptables -n --list AWS >/dev/null 2>&1 \
@@ -18,7 +39,7 @@ iptables -F AWS
 # without quotes. We only need the list of prefixes, so we discard everything
 # else.
 RANGES=$(curl -s -L https://ip-ranges.amazonaws.com/ip-ranges.json \
-    | jq -r '.prefixes[].ip_prefix' \
+    | jq -r ".prefixes[]$FILTERS.ip_prefix" \
     | sort -Vu)
 
 # Loop through the ranges, adding each to iptables
