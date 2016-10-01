@@ -16,7 +16,8 @@ iptables -F AWS
 # without quotes. We only need the list of prefixes, so we discard everything
 # else.
 RANGES=$(curl -s -L https://ip-ranges.amazonaws.com/ip-ranges.json \
-    | jq -r '.prefixes[].ip_prefix')
+    | jq -r '.prefixes[].ip_prefix' \
+    | sort -Vu)
 
 # Loop through the ranges, adding each to iptables
 while read -r line; do
