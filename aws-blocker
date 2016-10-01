@@ -1,8 +1,10 @@
 #!/bin/bash -e
 
+POSITION=1
+
 # Create the AWS iptables chain if it doesn't exist
 iptables -n --list AWS >/dev/null 2>&1 \
-    || (iptables -N AWS && iptables -I INPUT 1 -j AWS)
+    || (iptables -N AWS && iptables -I INPUT $POSITION -j AWS)
 
 # Flush the existing AWS iptables chain
 iptables -F AWS
