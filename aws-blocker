@@ -19,8 +19,14 @@ for arg in ${@:2}; do
 done
 
 if [[ -n $FILTERS ]]; then
-    FILTERS=" | "$FILTERS" | "
+    FILTERS=" | "$FILTERS
 fi
+
+GROUP='group_by(.ip_prefix)'
+MAP='map({ "ip": .[0].ip_prefix, "regions": map(.region) | unique, "services": map(.service) | unique })'
+TO_STRING='.ip + " \"" + (.regions | sort | join (", ")) + "\" \"" + (.services | sort | join (", ")) + "\""'
+
+PROCESS="$GROUP | $MAP | .[] | $TO_STRING"
 
 
 # Create the AWS iptables chain if it doesn't exist
@@ -39,10 +45,20 @@ iptables -F AWS
 # without quotes. We only need the list of prefixes, so we discard everything
 # else.
 RANGES=$(curl -s -L https://ip-ranges.amazonaws.com/ip-ranges.json \
-    | jq -r ".prefixes[]$FILTERS.ip_prefix" \
-    | sort -Vu)
+    | jq -r "[ .prefixes[]$FILTERS ] | $PROCESS" \
+    | sort -Vu \
+)
+
 
 # Loop through the ranges, adding each to iptables
-while read -r line; do
-    iptables -A AWS -s "$line" -j REJECT
-done <<< "$RANGES"
+IFS=$'\n' LINES=($RANGES)
+unset IFS
+
+for line in "${LINES[@]}"; do
+    eval DATA=($line)
+    IP=${DATA[0]}
+    REGIONS=$(echo ${DATA[1]} | tr '[:upper:]' '[:lower:]')
+    SERVICES=$(echo ${DATA[2]} | tr '[:upper:]' '[:lower:]')
+
+    iptables -A AWS -s "$IP" -j REJECT -m comment --comment "$REGIONS = $SERVICES"
+done
