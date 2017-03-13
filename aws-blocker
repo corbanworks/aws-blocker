@@ -9,18 +9,6 @@
 # without quotes. We only need the list of prefixes, so we discard everything
 # else.
 
-POSITION=1
-FILTERS=""
-JSON_URL="https://ip-ranges.amazonaws.com/ip-ranges.json"
-
-
-# Get the line where the jump will be inserted at.
-# Useful if you want e.g related / established rules for outgoing traffic.
-if [[ -n $1 ]]; then
-    POSITION=$1
-    shift
-fi
-
 
 ##
 # Builds region filters based on CLI arguments
@@ -117,13 +105,34 @@ function add_iptables_rules() {
 
 
 
+
+POSITION=1
+FILTERS=""
+JSON_URL="https://ip-ranges.amazonaws.com/ip-ranges.json"
+
 # Retrieve IP ranges definition
 # Either from an URL or file input (e.g. "< ranges.json")
-if [ ! -t 0 ]; then
-    JSON=$(cat - <&0)
+if [[ -f $1 ]]; then
+    JSON=$(<$1)
+    shift
 else
     JSON=$(curl -s -L $JSON_URL)
 fi
+
+if [[ -z $JSON ]]; then
+    echo "JSON definition empty" >&2
+    exit 1
+fi
+
+
+# Get the line where the jump will be inserted at.
+# Useful if you want e.g related / established rules for outgoing traffic.
+if [[ -n $1 ]]; then
+    POSITION=$1
+    shift
+fi
+
+
 
 FILTERS=$(build_filters "$*")
 
