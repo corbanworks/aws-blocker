@@ -138,12 +138,12 @@ FILTERS=$(build_filters "$*")
 
 
 # IPv4
-create_and_flush_chain "" $position
+create_and_flush_chain "" $POSITION
 V4_RANGES=$(extract_ip_ranges "$JSON" "$FILTERS" "prefixes" "ip_prefix")
 add_iptables_rules ""  "$V4_RANGES"
 
 
 # IPv6
-create_and_flush_chain 6 $position
+create_and_flush_chain 6 $POSITION
 V6_RANGES=$(extract_ip_ranges "$JSON" "$FILTERS" "ipv6_prefixes" "ipv6_prefix")
 add_iptables_rules "6" "$V6_RANGES"
