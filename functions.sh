@@ -134,3 +134,32 @@ function add_iptables_rules() {
         $cmd -A AWS -s "$ip" -j REJECT -m comment --comment "$regions = $services"
     done
 }
+
+
+##
+# Creates a ferm IP definition ruleset.
+#
+# Arguments:
+#     $1 Version to use
+#     $2 Prepared lines
+#
+function create_ferm_array() {
+    local version=$1
+    shift
+
+    echo '@def $AWS_IPS_V'$version' = ('
+
+    IFS=$'\n' lines=($1)
+    unset IFS
+
+    for line in "${lines[@]}"; do
+        eval local data=($line)
+        local ip=${data[0]}
+        local regions=$(echo ${data[1]} | tr '[:upper:]' '[:lower:]')
+        local services=$(echo ${data[2]} | tr '[:upper:]' '[:lower:]')
+
+        echo -e "    $ip\t\t\t# $regions = $services"
+    done
+
+    echo ');'
+}

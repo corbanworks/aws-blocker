@@ -1,0 +1,74 @@
+#!/bin/bash -e
+#
+# Creates a ferm IP array for Amazon AWS blocking.
+
+DIR=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+. $DIR/functions.sh
+
+
+function print_help() {
+    echo "$0"
+    echo "  --file     JSON definition file to load. Defaults to downloading it from Amazon."
+    echo "  --filters  Sets region filters (space separated, e.g. \"us-east-1 us-east-2\"')."
+    echo "  --debug    Prints debug output."
+    echo "  --help     Shows this help."
+}
+
+
+FILE=""
+FILTERS=""
+
+
+ARGS=$(getopt -o h -l help,file:,filters:,debug -- "$@")
+if [ $? -ne 0 ]; then
+    print_help
+    exit 1
+fi
+eval set -- "$ARGS"
+
+while true; do
+    case $1 in
+        --file)
+            FILE=("${2-}")
+            shift 2
+            ;;
+
+        --filters)
+            FILTERS=("${2-}")
+            shift 2
+            ;;
+
+        --debug)
+            DEBUG=1
+            shift
+            ;;
+
+
+        --)
+            shift
+            break
+            ;;
+
+        --status)
+            print_status
+            exit
+            ;;
+
+        -h|--help|*)
+            print_help
+            exit
+            ;;
+    esac
+done
+
+JSON=$(get_aws_json $FILE)
+
+if [[ -n $FILTERS ]]; then
+    FILTERS=$(build_filters "$FILTERS")
+fi
+
+V4_RANGES=$(extract_ip_ranges "$JSON" "$FILTERS" "prefixes" "ip_prefix")
+V6_RANGES=$(extract_ip_ranges "$JSON" "$FILTERS" "ipv6_prefixes" "ipv6_prefix")
+
+create_ferm_array 4 "$V4_RANGES"
+create_ferm_array 6 "$V6_RANGES"

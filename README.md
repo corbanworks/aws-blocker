@@ -4,11 +4,16 @@ This simple bash script will retrieve the official list of AWS IPv4 and IPv6 ran
 
 The script is safe to run multiple times. The AWS IP range list is updated periodically, so you may want to run this script as a cron.
 
+
 ## Requirements
 
 You'll need *jq* to parse the JSON. This package is readily available in most Linux package managers.
 
+
 ## Usage
+
+
+### aws-blocker
 
 ```
 aws-blocker [FILE] [POSITION] [REGIONS…]
@@ -29,3 +34,13 @@ Instead of downloading a file on each run you can also use an already existing f
 ```
 aws-blocker ranges.json 4 sa-east
 ```
+
+
+### aws-blocker-ferm
+
+```
+aws-blocker-ferm [--file=FILE] [--filters=REGIONS…]
+```
+
+Outputs a ferm IP array for v4 and v6.
+Use `--help` for a description of all parameters.
