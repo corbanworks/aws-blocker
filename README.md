@@ -14,8 +14,8 @@ You'll need *jq* to parse the JSON. This package is readily available in most Li
 Usage: aws-blocker [POSITION] [REGIONS]...
 ```
 
-Position is a nummeric value specifying the line number the INPUT chain target line will be inserted at. Defaults to 1.
-Without any region arguments all IP ranges will by used.
+Position is a numeric value specifying the line number the INPUT chain target line will be inserted at. Defaults to 1.
+Without any region arguments all IP ranges will be used.
 
 
 Example:
